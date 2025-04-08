@@ -1,3 +1,4 @@
+// Trigger redeploy to fix subpath routing
 import React from 'react';
 import ConnectWallet from './components/ConnectWallet'; // Import the ConnectWallet component
 
