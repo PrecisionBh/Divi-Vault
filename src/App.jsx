@@ -1,15 +1,8 @@
-// routing Confirmed - Brandon
-
 import React from 'react';
-import ConnectWallet from './components/ConnectWallet'; // Import the ConnectWallet component
+import LandingPage from './components/LandingPage'; // Adjust the path if needed
 
 function App() {
-  return (
-    <div className="App">
-      <h1>Welcome to Divi</h1>
-      <ConnectWallet /> {/* Render the ConnectWallet component */}
-    </div>
-  );
+  return <LandingPage />;
 }
 
 export default App;

@@ -1,166 +1,77 @@
-import React, { useState } from 'react';
+import { motion } from "framer-motion";
 
 export default function LandingPage() {
-  const [openSection, setOpenSection] = useState(null);
-
-  const toggleSection = (section) => {
-    setOpenSection(openSection === section ? null : section);
-  };
-
   return (
-    <div className="min-h-screen bg-gradient-to-b from-black via-gray-900 to-black text-white relative overflow-hidden">
-      <div className="absolute inset-0 bg-[url('/starfield.gif')] bg-cover bg-center opacity-30 animate-pulse z-0" />
-
-      <style>{`
-        .glow-box {
-          box-shadow: 0 0 15px rgba(0, 255, 255, 0.3), 0 0 5px rgba(0, 255, 255, 0.3) inset;
-          border: 1px solid rgba(0, 255, 255, 0.5);
-        }
-        .transition-height {
-          transition: max-height 0.6s ease, opacity 0.6s ease;
-        }
-      `}</style>
-
-      <div className="relative z-10 px-6 pt-20 text-center">
-        <h1 className="text-5xl md:text-7xl font-extrabold text-cyan-300 drop-shadow-xl mb-6 animate-glow">
-          Welcome to Divi
-        </h1>
-        <p className="text-lg md:text-2xl text-cyan-100 mb-10 max-w-2xl mx-auto animate-glow">
-          The Safer Side of DeFi
+    <div className="min-h-screen bg-[#070B17] text-[#00E5FF] px-4 py-8 md:px-6 md:py-12 flex flex-col items-center justify-center relative overflow-hidden space-y-20">
+      <div className="text-center w-full">
+        <h1 className="text-4xl md:text-6xl font-bold text-[#00E5FF] mb-4">Divi</h1>
+        <h2 className="text-lg md:text-xl text-[#B0C4DE] italic mb-4">The safer side of DeFi</h2>
+        <p className="text-base md:text-lg text-[#C2E9F9] max-w-3xl mx-auto mb-6">
+          Welcome to Divi — a next-gen ecosystem built on transparency, security, and simplicity.
+          Whether you're here to explore, build, or buy, you're not alone. You’re part of the <span className="text-[#00E5FF] font-semibold">Divi Army</span> — a movement focused on doing DeFi right.
         </p>
+        <motion.a
+          href="https://www.divivault.io/dashboard"
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          className="inline-block bg-[#00E5FF] text-black text-sm md:text-base font-bold py-2 px-6 rounded-full shadow-[0_0_10px_#00E5FF] transition-all duration-300"
+        >
+          Enter Ecosystem
+        </motion.a>
       </div>
 
-      {/* Collapsible Sections */}
-      <div className="relative z-10 max-w-5xl mx-auto px-6 mt-12 space-y-6">
-        {[
-          {
-            id: 'divi',
-            title: 'What is Divi?',
-            content: (
-              <p className="text-cyan-100 text-md md:text-lg max-w-3xl mx-auto">
-                Divi is a community-driven token and DeFi toolkit built for transparency, simplicity, and security. With a custom dashboard, token locker, and real-time reflections tracking, Divi empowers holders and projects to thrive in a safe and visible ecosystem.
-              </p>
-            )
-          },
-          {
-            id: 'vault',
-            title: 'Divi Vault',
-            content: (
-              <div className="text-left">
-                <h3 className="text-2xl font-semibold text-cyan-200 mb-2">Liquidity Vault</h3>
-                <p className="text-cyan-100 mb-4">
-                  For serious developers who want to earn investor trust. Lock liquidity and vest team allocations across multiple chains — and prove you’re building something real.
-                </p>
-                <h4 className="text-cyan-300 font-semibold mb-1">Use Case:</h4>
-                <ul className="list-disc list-inside text-cyan-100 mb-4">
-                  <li>Lock LP tokens and team tokens on <strong>BNB, ETH, Arbitrum, and more</strong></li>
-                  <li>Add unlock dates or vesting schedules</li>
-                  <li>Public vault records to back your launch with transparency</li>
-                </ul>
-                <h4 className="text-cyan-300 font-semibold mb-1">Benefits:</h4>
-                <ul className="list-disc list-inside text-cyan-100 mb-6">
-                  <li>Shows investors you're committed and anti-rug</li>
-                  <li>Helps qualify for launchpads, listings, and trusted community spaces</li>
-                  <li><strong>Using Divi Vault is a growth tool</strong> — transparency becomes your marketing advantage</li>
-                </ul>
-                <div className="text-center">
-                  <a
-                    href="/vault"
-                    className="inline-block px-6 py-3 bg-cyan-600 hover:bg-cyan-700 text-white font-semibold rounded-xl shadow-md transition"
-                  >
-                    🔒 Go to Vault Now
-                  </a>
-                </div>
-              </div>
-            )
-          },
-          {
-            id: 'dashboard',
-            title: 'Divi Dashboard',
-            content: (
-              <div className="text-left">
-                <h3 className="text-2xl font-semibold text-cyan-200 mb-2">Use Cases (Starting Out)</h3>
-                <ul className="list-disc list-inside text-cyan-100 mb-4">
-                  <li>Track live Divi token info: price, market cap, liquidity, holders</li>
-                  <li>Buy DIVI tokens directly through an integrated dashboard swap</li>
-                  <li>View total reflections sent globally</li>
-                  <li>User-friendly interface designed for all experience levels</li>
-                </ul>
-                <h3 className="text-2xl font-semibold text-cyan-200 mb-2 mt-6">Future Capabilities</h3>
-                <ul className="list-disc list-inside text-cyan-100 mb-6">
-                  <li>Swap multiple tokens across multiple chains</li>
-                  <li>Track live token charts and performance</li>
-                  <li>Search and explore tokens from the Divi ecosystem</li>
-                </ul>
-                <div className="text-center">
-                  <a
-                    href="/dashboard"
-                    className="inline-block px-6 py-3 bg-cyan-600 hover:bg-cyan-700 text-white font-semibold rounded-xl shadow-md transition"
-                  >
-                    📊 Go to Dashboard
-                  </a>
-                </div>
-              </div>
-            )
-          },
-          {
-            id: 'token',
-            title: 'Divi Token',
-            content: (
-              <div className="text-left">
-                <p className="text-cyan-100 mb-6 text-md md:text-lg">
-                  Divi was created out of frustration — a response to the endless wave of malicious tokens that steal trust and money from everyday investors. We’re here to change that.
-                  <br /><br />
-                  The Divi Token is the heart of a transparent ecosystem. It's not just a token — it’s a message: <strong>you deserve better</strong>.
-                </p>
-                <h3 className="text-2xl font-semibold text-cyan-200 mb-2">Use Case</h3>
-                <ul className="list-disc list-inside text-cyan-100 mb-6">
-                  <li>Pay gas fees for locker and dashboard features</li>
-                  <li>Earn <strong>reflections</strong> from every transaction — no staking required</li>
-                  <li>Unlock exclusive features within the Divi platform</li>
-                </ul>
-                <h3 className="text-2xl font-semibold text-cyan-200 mb-2">Token Philosophy</h3>
-                <ul className="list-disc list-inside text-cyan-100 mb-6">
-                  <li><strong>1,000,000 total supply</strong> — no presale, no team tokens, no VC allocations</li>
-                </ul>
-                <h3 className="text-2xl font-semibold text-cyan-200 mb-2">Why It Matters</h3>
-                <ul className="list-disc list-inside text-cyan-100 mb-10">
-                  <li>Built for holders, not insiders</li>
-                  <li>Real utility from day one</li>
-                  <li>Every feature we build runs on the principles Divi was founded on: <strong>integrity, transparency, and safety</strong></li>
-                </ul>
-                <div className="text-center">
-                  <a
-                    href="/token"
-                    className="inline-block px-6 py-3 bg-cyan-600 hover:bg-cyan-700 text-white font-semibold rounded-xl shadow-md transition"
-                  >
-                    📘 Learn More
-                  </a>
-                </div>
-              </div>
-            )
-          }
-        ].map(({ id, title, content }) => (
-          <div key={id} className="glow-box rounded-2xl overflow-hidden">
-            <button
-              onClick={() => toggleSection(id)}
-              className="w-full text-left px-6 py-4 text-xl md:text-2xl font-bold text-cyan-300 flex justify-between items-center hover:text-cyan-200 transition"
-            >
-              {title}
-              <span className="text-cyan-400 text-2xl">{openSection === id ? '▾' : '▸'}</span>
-            </button>
-            <div
-              className={`px-6 pb-6 transition-all duration-500 ease-in-out ${openSection === id ? 'max-h-screen opacity-100' : 'max-h-0 opacity-0 overflow-hidden'}`}
-            >
-              {content}
+      <div className="relative w-full max-w-5xl px-6 py-10 rounded-3xl bg-gradient-to-br from-[#0A1228] via-[#111c3a] to-[#0A1228] border-4 border-[#00E5FF] shadow-[inset_0_0_40px_rgba(0,229,255,0.3),_0_0_25px_#00E5FF] backdrop-blur-md overflow-hidden text-center">
+        <motion.div
+          className="absolute inset-0 z-0"
+          animate={{ opacity: [0, 1, 0] }}
+          transition={{ duration: 1.5, repeat: Infinity, repeatDelay: 7 }}
+        >
+          <div className="w-full h-full bg-[radial-gradient(circle,_rgba(0,229,255,0.1)_0%,_transparent_70%)]"></div>
+        </motion.div>
+
+        <div className="relative z-10 flex flex-col gap-y-10 items-center">
+          <div className="text-center max-w-2xl">
+            <h3 className="text-[#00E5FF] font-semibold text-xl md:text-2xl mb-2 uppercase tracking-wide">Divi Dashboard</h3>
+            <p className="text-base text-[#C2E9F9]">
+              The central hub for the entire Divi ecosystem. Swap DIVI instantly, navigate through utilities, and track your reflections in real time.
+            </p>
+          </div>
+
+          <div className="text-center max-w-md">
+            <h3 className="text-[#00E5FF] font-semibold text-xl md:text-2xl mb-2 uppercase tracking-wide">Divi Vault</h3>
+            <p className="text-base text-[#C2E9F9]">Lock liquidity and tokens with NFT proof.</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-10 w-full max-w-4xl">
+            <div className="text-center">
+              <h3 className="text-[#00E5FF] font-semibold text-xl md:text-2xl mb-2 uppercase tracking-wide">Reflections</h3>
+              <p className="text-base text-[#C2E9F9]">Earn passively just by holding.</p>
+            </div>
+            <div className="text-center">
+              <h3 className="text-[#00E5FF] font-semibold text-xl md:text-2xl mb-2 uppercase tracking-wide">Anti-Rug Design</h3>
+              <p className="text-base text-[#C2E9F9]">Contract-enforced protection by design.</p>
             </div>
           </div>
-        ))}
+        </div>
       </div>
 
-      <footer className="mt-32 mb-8 text-center text-sm text-gray-500 z-10 relative">
-        Divi Vault © 2025 — All rights reserved
-      </footer>
+      <div className="relative w-full max-w-3xl p-6 md:p-8 rounded-full bg-gradient-to-br from-[#0A1228] via-[#111c3a] to-[#0A1228] border-4 border-[#00E5FF] shadow-[inset_0_0_30px_rgba(0,229,255,0.3),_0_0_20px_#00E5FF] backdrop-blur-md overflow-hidden text-center">
+        <h3 className="text-[#00E5FF] font-semibold text-xl md:text-2xl mb-4">Future Ecosystem Growth</h3>
+        <ul className="text-[#C2E9F9] text-base md:text-lg space-y-2">
+          <li>Contract Creator</li>
+          <li>Staking Platform</li>
+          <li>Contract Audits with <span className="text-[#00E5FF] font-semibold">Divi Stamps</span> of approval</li>
+        </ul>
+      </div>
+
+      <motion.a
+        href="https://www.divivault.io/dashboard"
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.95 }}
+        className="bg-[#00E5FF] text-black text-4xl font-bold py-6 px-20 rounded-full shadow-[0_0_20px_#00E5FF] transition-all duration-300"
+      >
+        Enter Ecosystem
+      </motion.a>
     </div>
   );
 }
