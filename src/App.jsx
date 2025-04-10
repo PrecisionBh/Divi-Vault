@@ -1,8 +1,25 @@
 import React from 'react';
-import LandingPage from './components/LandingPage'; // Adjust the path if needed
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+
+// Importing your components
+import LandingPage from './components/LandingPage';
+import DiviDashboard from './components/DiviDashboard';
+import StakingComingSoon from './components/StakingComingSoon';
+import ContractCreatorComingSoon from './components/ContractCreatorComingSoon';
+import ContractAuditsComingSoon from './components/ContractAuditsComingSoon';
 
 function App() {
-  return <LandingPage />;
+  return (
+    <Router>
+      <Routes>
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/dashboard" element={<DiviDashboard />} />
+        <Route path="/staking-coming-soon" element={<StakingComingSoon />} />
+        <Route path="/contract-creator-coming-soon" element={<ContractCreatorComingSoon />} />
+        <Route path="/contract-audits-coming-soon" element={<ContractAuditsComingSoon />} />
+      </Routes>
+    </Router>
+  );
 }
 
 export default App;

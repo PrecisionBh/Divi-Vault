@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { ethers } from "ethers";
 import { motion } from "framer-motion";
-import BoostedCard from "./BoostedCard"; // Corrected import (default export assumed)
+import { Link } from "react-router-dom"; // Import Link from react-router-dom
 
 const DIVI_LP_ADDRESS = "0x0D93e888279349c86a025c1DbbAf7D3c19aa5997";
 const DIVI_TOKEN_ADDRESS = "0xB5623308Cc34691233B7FfB1940da5f524AB36CB";
@@ -146,7 +146,11 @@ export default function DiviDashboard() {
               </button>
               <p className="text-sm text-[#C2E9F9] mt-1 text-center">
                 {label === "$Divi" ? "Token Info" :
-                label === "Divi Vault" ? "LP and Token Locker" : "Coming Soon"}
+                label === "Divi Vault" ? "LP and Token Locker" :
+                label === "Staking" ? <Link to="/staking-coming-soon">Coming Soon</Link> :
+                label === "Contract Creator" ? <Link to="/contract-creator-coming-soon">Coming Soon</Link> :
+                label === "Divi Audits" ? <Link to="/contract-audits-coming-soon">Coming Soon</Link> :
+                "Coming Soon"}
               </p>
             </div>
           ))}
