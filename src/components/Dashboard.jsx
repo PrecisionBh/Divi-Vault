@@ -1,172 +1,217 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { ethers } from "ethers";
+import { motion } from "framer-motion";
+import BoostedCard from "./BoostedCard"; // Corrected import (default export assumed)
 
-const DIVI_ADDRESS = "0xc363c39baF1AE6f6F490B69D3622D8c0Aa74b8fF";
-const PAIR_ADDRESS = "0xc5fF7bC375C1BD6668E69a2d5d2850d0e9bc3bf7";
-const BNB_PRICE_API = "https://api.binance.com/api/v3/ticker/price?symbol=BNBUSDT";
+const DIVI_LP_ADDRESS = "0x0D93e888279349c86a025c1DbbAf7D3c19aa5997";
+const DIVI_TOKEN_ADDRESS = "0xB5623308Cc34691233B7FfB1940da5f524AB36CB";
+const LP_ABI = [
+  "function getReserves() view returns (uint112 reserve0, uint112 reserve1, uint32 blockTimestampLast)",
+  "function token0() view returns (address)",
+  "function token1() view returns (address)"
+];
+const DIVI_ABI = [
+  "function totalReflections() view returns (uint256)",
+  "function totalSupply() view returns (uint256)"
+];
 
-const Starfield = () => {
-  const [stars, setStars] = useState([]);
+export default function DiviDashboard() {
+  const [bnbAmount, setBnbAmount] = useState("");
+  const [bnbUsd, setBnbUsd] = useState(null);
+  const [isConfirming, setIsConfirming] = useState(false);
+  const [walletConnected, setWalletConnected] = useState(false);
+
+  const [price, setPrice] = useState(null);
+  const [liquidity, setLiquidity] = useState(null);
+  const [reflections, setReflections] = useState(null);
 
   useEffect(() => {
-    const generatedStars = Array.from({ length: 150 }).map((_, i) => ({
-      id: i,
-      top: Math.random() * 100,
-      left: Math.random() * 100,
-      size: Math.random() * 2 + 1,
-      delay: Math.random() * 6,
-      duration: Math.random() * 2 + 2,
-      color: ["#ffffff", "#00ffff", "#66ccff"][Math.floor(Math.random() * 3)],
-    }));
-    setStars(generatedStars);
+    const fetchBnbPrice = async () => {
+      try {
+        const res = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=binancecoin&vs_currencies=usd");
+        const data = await res.json();
+        setBnbUsd(data?.binancecoin?.usd || null);
+      } catch (err) {
+        console.error("Error fetching BNB price", err);
+      }
+    };
+    fetchBnbPrice();
   }, []);
 
-  return (
-    <div className="absolute inset-0 z-0 bg-black overflow-hidden">
-      <style>{`
-        @keyframes twinkle { 0%, 100% { opacity: 0.2; } 50% { opacity: 1; } }
-        @keyframes glow { 0%, 100% { text-shadow: 0 0 10px #00ffff, 0 0 20px #00ffff; } 50% { text-shadow: 0 0 20px #00ffff, 0 0 40px #00ffff; } }
-        @keyframes energy-move-header { 0%, 100% { transform: translateX(-100%); } 50% { transform: translateX(100%); } }
-        .animate-glow { animation: glow 2s ease-in-out infinite; }
-        .animate-energy-header { animation: energy-move-header 8s ease-in-out infinite; }
-      `}</style>
-      {stars.map((star) => (
-        <div
-          key={star.id}
-          className="absolute rounded-full"
-          style={{
-            top: `${star.top}%`,
-            left: `${star.left}%`,
-            width: `${star.size}px`,
-            height: `${star.size}px`,
-            backgroundColor: star.color,
-            opacity: 0.2,
-            animation: `twinkle ${star.duration}s ease-in-out infinite`,
-            animationDelay: `${star.delay}s`,
-          }}
-        />
-      ))}
-    </div>
-  );
-};
-
-export default function Dashboard() {
-  const [walletAddress, setWalletAddress] = useState(null);
-  const [price, setPrice] = useState(null);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [bnbAmount, setBnbAmount] = useState("");
-  const [showConfirm, setShowConfirm] = useState(false);
-
-  const connectWallet = async () => {
-    if (window.ethereum) {
-      const provider = new ethers.BrowserProvider(window.ethereum);
-
+  useEffect(() => {
+    const fetchData = async () => {
       try {
-        setIsProcessing(true);
-        console.log("Requesting account access...");
-        await provider.send("eth_requestAccounts", []);
-        const signer = await provider.getSigner();
-        const account = await signer.getAddress();
-        setWalletAddress(account);
-        console.log("Connected account:", account);
+        const provider = new ethers.providers.JsonRpcProvider("https://bsc-dataseed.binance.org/");
+        const lpContract = new ethers.Contract(DIVI_LP_ADDRESS, LP_ABI, provider);
+        const tokenContract = new ethers.Contract(DIVI_TOKEN_ADDRESS, DIVI_ABI, provider);
+
+        const reserves = await lpContract.getReserves();
+        const token0 = await lpContract.token0();
+        const token1 = await lpContract.token1();
+
+        if (!reserves || !token0 || !token1) throw new Error("Incomplete LP contract data");
+
+        const [res0, res1] = reserves;
+        const isDiviToken0 = token0.toLowerCase() === DIVI_TOKEN_ADDRESS.toLowerCase();
+        const diviReserve = isDiviToken0 ? res0 : res1;
+        const bnbReserve = isDiviToken0 ? res1 : res0;
+
+        if (diviReserve == 0) throw new Error("DIVI reserve is zero, cannot calculate price");
+
+        const pricePerToken = bnbReserve / diviReserve;
+        const totalLiquidity = (bnbReserve / 1e18) * 2;
+
+        const totalReflections = await tokenContract.totalReflections();
+
+        setPrice(pricePerToken * bnbUsd);
+        setLiquidity(totalLiquidity * bnbUsd);
+        setReflections((Number(totalReflections) / 1e18) * bnbUsd);
       } catch (err) {
-        console.error("Error connecting to wallet:", err);
-      } finally {
-        setIsProcessing(false);
+        console.error("Error fetching LP data:", err);
       }
-    } else {
-      alert("Please install MetaMask.");
+    };
+    if (bnbUsd) {
+      fetchData();
+      const interval = setInterval(fetchData, 8000);
+      return () => clearInterval(interval);
+    }
+  }, [bnbUsd]);
+
+  const handleBuyNow = () => {
+    if (!walletConnected) return;
+    setIsConfirming(true);
+  };
+
+  const handleConnectWallet = async () => {
+    if (window.ethereum) {
+      try {
+        const provider = new ethers.providers.Web3Provider(window.ethereum);
+        await provider.send("eth_requestAccounts", []);
+        setWalletConnected(true);
+      } catch (err) {
+        console.error("Wallet connection failed", err);
+      }
     }
   };
 
-  const navigate = (path) => {
-    window.location.href = path;
+  const handleConfirmSwap = () => {
+    setIsConfirming(false);
   };
 
-  const estimatedDivi = price && bnbAmount ? (parseFloat(bnbAmount) / price).toFixed(2) : "0";
-  const usdValue = bnbAmount && price ? (parseFloat(bnbAmount) * price).toFixed(2) : "0.00";
-  const feeAmount = bnbAmount ? (parseFloat(bnbAmount) * 0.005).toFixed(6) : "0.000000";
-  const netBnb = bnbAmount ? (parseFloat(bnbAmount) - parseFloat(feeAmount)).toFixed(6) : "0.000000";
+  const parsedBNB = parseFloat(bnbAmount || "0");
+  const fee = !isNaN(parsedBNB) && parsedBNB > 0 ? parsedBNB * 0.005 : 0;
+  const toSwap = parsedBNB - fee;
+  const usd = bnbUsd && !isNaN(parsedBNB) && parsedBNB > 0 ? (parsedBNB * bnbUsd).toFixed(2) : null;
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-start text-white relative overflow-hidden pt-20 bg-black">
-      <Starfield />
-
-      {/* Reflections Box */}
-      <div className="absolute top-6 left-6 z-20 text-left">
-        <p className="text-sm text-cyan-300 mb-1">Total Reflections Sent</p>
-        <div className="bg-cyan-600 text-white px-4 py-2 rounded-full shadow-lg text-lg font-semibold">
-          $12,345.67
-        </div>
-      </div>
-
-      <div className="absolute top-6 right-6 z-20 flex gap-2">
-        <button
-          onClick={() => navigate("/")}
-          className="bg-zinc-700 hover:bg-zinc-600 text-white px-4 py-2 rounded-full shadow-lg transition duration-300"
+    <div className="min-h-screen bg-[#070B17] text-[#00E5FF] px-4 md:px-8 py-8 flex flex-col relative">
+      <div className="w-full flex justify-between items-start mb-4">
+        <motion.div
+          className="bg-[#0A1228] border-4 border-[#00E5FF] rounded-full px-6 py-4 shadow-[0_0_20px_#00E5FF] text-center font-semibold"
+          animate={{ scale: [1, 1.05, 1] }}
+          transition={{ repeat: Infinity, duration: 6, ease: "easeInOut" }}
         >
-          Back to Home
-        </button>
+          <p className="text-lg">Total Reflections: ${reflections?.toFixed(2) || "0.00"}</p>
+          <p className="text-sm text-[#C2E9F9]">0 DIVI</p>
+        </motion.div>
+
         <button
-          onClick={connectWallet}
-          className="bg-cyan-600 hover:bg-cyan-500 text-white px-4 py-2 rounded-full shadow-lg transition duration-300"
+          onClick={handleConnectWallet}
+          className="bg-[#00E5FF] text-black font-bold px-6 py-2 rounded-full shadow-[0_0_12px_#00E5FF] hover:scale-105 transition"
         >
-          {walletAddress ? `${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}` : "Connect Wallet"}
+          {walletConnected ? "Connected" : "Connect Wallet"}
         </button>
       </div>
 
-      <h1 className="text-4xl md:text-6xl font-bold mb-4 z-10 text-cyan-300 animate-glow">Divi Dashboard</h1>
-
-      <div className="text-sm text-cyan-200 z-10 mb-4 flex flex-wrap justify-center gap-6 animate-glow">
-        <div>Price: ${price ? price.toFixed(4) : "0.00"}</div>
-        <div>Liquidity: Data coming soon</div>
-        <div>Holders: 1,234</div>
+      <div className="text-center mt-4">
+        <h1 className="text-4xl md:text-6xl font-bold text-[#00E5FF]">Divi Dashboard</h1>
+        <p className="text-[#B0C4DE] mt-2 text-lg md:text-xl">Central Hub of the Divi Ecosystem</p>
       </div>
 
-      <div className="relative w-full h-1 bg-cyan-800 overflow-hidden z-10 mb-6">
-        <div className="absolute h-1 w-full animate-energy-header">
-          <div className="w-40 h-1 bg-gradient-to-r from-cyan-300 via-cyan-100 to-transparent rounded-full shadow-xl" />
+      <div className="mt-6 w-full text-center flex flex-col items-center">
+        <div className="flex flex-col md:flex-row justify-center gap-10 text-lg md:text-xl font-semibold text-[#C2E9F9]">
+          <p>Price: ${price?.toFixed(6) || "0.0000"}</p>
+          <p>Liquidity: ${liquidity?.toFixed(0) || "0"}</p>
+          <p>Holders: 0</p>
+        </div>
+        <div className="mt-4 h-[2px] w-full bg-gradient-to-r from-transparent via-[#00E5FF] to-transparent animate-pulse"></div>
+      </div>
+
+      <div className="mt-10 w-full flex justify-between items-start gap-6">
+        <div className="w-48 flex flex-col gap-6">
+          {["$Divi", "Divi Vault", "Staking", "Contract Creator", "Divi Audits"].map((label, index) => (
+            <div key={index} className="flex flex-col items-center w-full">
+              <button className="w-full bg-[#00E5FF] text-black px-4 py-2 rounded-xl font-bold shadow-[0_0_12px_#00E5FF] hover:scale-105 transition">
+                {label}
+              </button>
+              <p className="text-sm text-[#C2E9F9] mt-1 text-center">
+                {label === "$Divi" ? "Token Info" :
+                label === "Divi Vault" ? "LP and Token Locker" : "Coming Soon"}
+              </p>
+            </div>
+          ))}
+        </div>
+
+        <div className="flex flex-col items-center flex-grow max-w-2xl mx-auto">
+          <div className="bg-[#0A1228] border-4 border-[#00E5FF] rounded-2xl p-8 w-full shadow-[0_0_20px_#00E5FF]">
+            <h2 className="text-2xl font-bold text-center mb-6">Swap Divi</h2>
+            <div className="flex flex-col gap-4">
+              <div className="flex flex-col bg-[#10192f] rounded-xl px-4 py-4">
+                <label className="text-sm text-[#C2E9F9] mb-1 font-semibold">You Pay (BNB)</label>
+                <input
+                  type="number"
+                  placeholder="Enter amount"
+                  value={bnbAmount}
+                  onChange={(e) => setBnbAmount(e.target.value)}
+                  className="w-full px-4 py-3 text-black rounded-xl"
+                />
+              </div>
+              <div className="flex justify-center items-center -mt-3 mb-1 z-10">
+                <div className="bg-[#0A1228] border-2 border-[#00E5FF] rounded-full p-1">
+                  <span className="text-[#00E5FF] text-xl">↓</span>
+                </div>
+              </div>
+              <div className="flex flex-col bg-[#10192f] rounded-xl px-4 py-4">
+                <label className="text-sm text-[#C2E9F9] mb-1 font-semibold">You Receive (DIVI)</label>
+                <input
+                  type="text"
+                  placeholder="Estimated output"
+                  value={parsedBNB && price ? ((toSwap) / price).toFixed(2) : ""}
+                  disabled
+                  className="w-full px-4 py-3 text-black rounded-xl bg-gray-100 cursor-not-allowed"
+                />
+              </div>
+            </div>
+            <div className="mt-4 text-sm text-center text-[#C2E9F9] space-y-1">
+              <p>0.5% Fee: <span className="font-bold">{fee > 0 ? fee.toFixed(4) : "--"} BNB</span></p>
+              {usd && <p>Estimated USD: <span className="font-bold">${usd}</span></p>}
+            </div>
+            <button
+              onClick={walletConnected ? handleBuyNow : handleConnectWallet}
+              className="mt-4 w-full bg-[#00E5FF] text-black font-bold px-6 py-3 rounded-xl shadow-[0_0_10px_#00E5FF] hover:scale-105 transition"
+            >
+              {walletConnected ? "Buy Now" : "Connect Wallet"}
+            </button>
+            <p className="text-xs text-gray-400 mt-4 text-center">Disclaimer: Not financial advice. DYOR before swapping.</p>
+          </div>
+        </div>
+
+        <div className="w-64">
+          <BoostedCard />
         </div>
       </div>
 
-      <div className="mt-6 z-10">
-        <div className="bg-zinc-900 rounded-2xl shadow-2xl p-6 w-80 text-center border border-cyan-600">
-          <h2 className="text-2xl font-bold text-cyan-300 mb-4">Buy DIVI</h2>
-          <input
-            type="number"
-            placeholder="Amount in BNB"
-            value={bnbAmount}
-            onChange={(e) => setBnbAmount(e.target.value)}
-            className="w-full px-4 py-2 rounded bg-black text-white border border-cyan-500 mb-4"
-          />
-          <p className="text-cyan-200 text-sm mb-2">≈ {estimatedDivi} DIVI</p>
-          <p className="text-cyan-400 text-xs mb-4">Spending ≈ ${usdValue} USD</p>
-          <button
-            onClick={() => setShowConfirm(true)}
-            className="bg-cyan-600 hover:bg-cyan-700 w-full py-2 rounded text-white font-bold transition"
-            disabled={isProcessing || !bnbAmount}
-          >
-            {isProcessing ? "Processing..." : "Buy Now"}
-          </button>
-        </div>
-      </div>
-
-      {showConfirm && (
-        <div className="fixed inset-0 bg-black bg-opacity-80 z-50 flex items-center justify-center">
-          <div className="bg-zinc-800 border border-cyan-500 rounded-2xl p-6 w-96 shadow-xl text-white">
-            <h2 className="text-xl text-cyan-300 font-bold mb-4">Confirm Purchase</h2>
-            <p className="text-sm mb-2">BNB Entered: {bnbAmount}</p>
-            <p className="text-sm mb-2">Fee (0.5%): {feeAmount} BNB</p>
-            <p className="text-sm mb-2">Net Sent: {netBnb} BNB</p>
-            <p className="text-sm mb-4">Est. Tokens: {estimatedDivi} DIVI</p>
-            <div className="flex gap-4">
-              <button
-                onClick={() => setShowConfirm(false)}
-                className="bg-gray-700 hover:bg-gray-600 flex-1 py-2 rounded"
-              >Cancel</button>
-              <button
-                className="bg-cyan-600 hover:bg-cyan-700 flex-1 py-2 rounded"
-              >Confirm</button>
+      {isConfirming && (
+        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
+          <div className="bg-[#0A1228] border-4 border-[#00E5FF] rounded-2xl p-8 w-full max-w-md shadow-[0_0_30px_#00E5FF] text-center">
+            <h3 className="text-xl font-bold mb-4">Confirm Your Swap</h3>
+            <p className="mb-2">Amount Entered: {bnbAmount} BNB</p>
+            <p className="mb-2">Platform Fee: {fee.toFixed(4)} BNB</p>
+            <p className="mb-2">Swapping: {toSwap.toFixed(4)} BNB → DIVI</p>
+            {usd && <p className="mb-4 text-[#C2E9F9]">Approx. Value: ${usd}</p>}
+            <div className="flex gap-4 justify-center">
+              <button onClick={handleConfirmSwap} className="bg-[#00E5FF] text-black font-bold px-6 py-2 rounded-full">Confirm</button>
+              <button onClick={() => setIsConfirming(false)} className="border border-[#00E5FF] text-[#00E5FF] px-6 py-2 rounded-full">Cancel</button>
             </div>
           </div>
         </div>
