@@ -3,7 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 
 // Importing your components
 import LandingPage from './components/LandingPage';
-import DiviDashboard from './components/DiviDashboard';
+import Dashboard from './components/Dashboard';
 import StakingComingSoon from './components/StakingComingSoon';
 import ContractCreatorComingSoon from './components/ContractCreatorComingSoon';
 import ContractAuditsComingSoon from './components/ContractAuditsComingSoon';
